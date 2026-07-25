@@ -1,0 +1,249 @@
+#####
+#
+# This class is part of the Programming the Internet of Things
+# project, and is available via the MIT License, which can be
+# found in the LICENSE file at the top level of this repository.
+#
+# You may find it more helpful to your design to adjust the
+# functionality, constants and interfaces (if there are any)
+# provided within in order to meet the needs of your specific
+# Programming the Internet of Things project.
+#
+
+import json
+import logging
+
+from json import JSONEncoder
+from decimal import Decimal
+
+from programmingtheiot.data.ActuatorData import ActuatorData
+from programmingtheiot.data.SensorData import SensorData
+from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
+
+
+class DataUtil():
+	"""
+	Shell representation of class for student implementation.
+	"""
+
+	def __init__(self, encodeToUtf8 = False):
+		self.encodeToUtf8 = encodeToUtf8
+
+		logging.info("Created DataUtil instance.")
+
+	def actuatorDataToJson(
+		self,
+		data: ActuatorData = None,
+		useDecForFloat: bool = False
+	):
+		if not data:
+			logging.debug("ActuatorData is null. Returning empty string.")
+
+			return ""
+
+		logging.debug(
+			"Encoding ActuatorData to JSON [pre] --> name=%s,typeID=%s,timeStamp=%s,statusCode=%s,hasError=%s,locationID=%s,elevation=%s,latitude=%s,longitude=%s,command=%s,stateData=%s,value=%s",
+			str(getattr(data, 'name', 'Not Set')),
+			str(getattr(data, 'typeID', 0)),
+			str(getattr(data, 'timeStamp', '')),
+			str(getattr(data, 'statusCode', 0)),
+			str(getattr(data, 'hasError', False)),
+			str(getattr(data, 'locationID', None)),
+			str(getattr(data, 'elevation', 0.0)),
+			str(getattr(data, 'latitude', 0.0)),
+			str(getattr(data, 'longitude', 0.0)),
+			str(getattr(data, 'command', 0)),
+			str(getattr(data, 'stateData', None)),
+			str(getattr(data, 'value', 0.0))
+		)
+
+		jsonData = self._generateJsonData(
+			obj = data,
+			useDecForFloat = useDecForFloat
+		)
+
+		logging.info(
+			"Encoding ActuatorData to JSON [post] --> \n%s",
+			jsonData
+		)
+
+		return jsonData
+
+	def sensorDataToJson(
+		self,
+		data: SensorData = None,
+		useDecForFloat: bool = False
+	):
+		if not data:
+			logging.debug("SensorData is null. Returning empty string.")
+
+			return ""
+
+		return self._generateJsonData(
+			obj = data,
+			useDecForFloat = useDecForFloat
+		)
+
+	def systemPerformanceDataToJson(
+		self,
+		data: SystemPerformanceData = None,
+		useDecForFloat: bool = False
+	):
+		if not data:
+			logging.debug("SystemPerformanceData is null. Returning empty string.")
+
+			return ""
+
+		return self._generateJsonData(
+			obj = data,
+			useDecForFloat = useDecForFloat
+		)
+
+	def jsonToActuatorData(
+		self,
+		jsonData: str = None,
+		useDecForFloat: bool = False
+	):
+		if not jsonData:
+			logging.warning("JSON data is empty or null. Returning null.")
+
+			return None
+
+		logging.debug(
+			"Decoding JSON to ActuatorData [pre] --> %s",
+			jsonData
+		)
+
+		jsonStruct = self._formatDataAndLoadDictionary(
+			jsonData,
+			useDecForFloat = useDecForFloat
+		)
+
+		ad = ActuatorData()
+
+		self._updateIotData(jsonStruct, ad)
+
+		logging.info(
+			"Decoding JSON to ActuatorData [post] --> name=%s,typeID=%s,timeStamp=%s,statusCode=%s,hasError=%s,locationID=%s,elevation=%s,latitude=%s,longitude=%s,command=%s,stateData=%s,value=%s",
+			str(getattr(ad, 'name', 'Not Set')),
+			str(getattr(ad, 'typeID', 0)),
+			str(getattr(ad, 'timeStamp', '')),
+			str(getattr(ad, 'statusCode', 0)),
+			str(getattr(ad, 'hasError', False)),
+			str(getattr(ad, 'locationID', None)),
+			str(getattr(ad, 'elevation', 0.0)),
+			str(getattr(ad, 'latitude', 0.0)),
+			str(getattr(ad, 'longitude', 0.0)),
+			str(getattr(ad, 'command', 0)),
+			str(getattr(ad, 'stateData', None)),
+			str(getattr(ad, 'value', 0.0))
+		)
+
+		return ad
+
+	def jsonToSensorData(
+		self,
+		jsonData: str = None,
+		useDecForFloat: bool = False
+	):
+		if not jsonData:
+			logging.warning("JSON data is empty or null. Returning null.")
+
+			return None
+
+		jsonStruct = self._formatDataAndLoadDictionary(
+			jsonData,
+			useDecForFloat = useDecForFloat
+		)
+
+		sd = SensorData()
+
+		self._updateIotData(jsonStruct, sd)
+
+		return sd
+
+	def jsonToSystemPerformanceData(
+		self,
+		jsonData: str = None,
+		useDecForFloat: bool = False
+	):
+		if not jsonData:
+			logging.warning("JSON data is empty or null. Returning null.")
+
+			return None
+
+		jsonStruct = self._formatDataAndLoadDictionary(
+			jsonData,
+			useDecForFloat = useDecForFloat
+		)
+
+		spd = SystemPerformanceData()
+
+		self._updateIotData(jsonStruct, spd)
+
+		return spd
+
+	def _generateJsonData(
+		self,
+		obj,
+		useDecForFloat: bool = False
+	) -> str:
+		jsonData = None
+
+		if self.encodeToUtf8:
+			jsonData = json.dumps(
+				obj,
+				cls = JsonDataEncoder
+			).encode('utf8')
+
+		else:
+			jsonData = json.dumps(
+				obj,
+				cls = JsonDataEncoder,
+				indent = 4
+			)
+
+		return jsonData
+
+	def _formatDataAndLoadDictionary(
+		self,
+		jsonData: str,
+		useDecForFloat: bool = False
+	) -> dict:
+		jsonData = jsonData.replace(
+			"\'",
+			"\""
+		).replace(
+			'False',
+			'false'
+		).replace(
+			'True',
+			'true'
+		)
+
+		if useDecForFloat:
+			return json.loads(
+				jsonData,
+				parse_float = Decimal
+			)
+
+		return json.loads(jsonData)
+
+	def _updateIotData(self, jsonStruct: dict, obj):
+		varStruct = vars(obj)
+
+		for key in jsonStruct:
+			if key in varStruct:
+				setattr(obj, key, jsonStruct[key])
+
+			else:
+				logging.warning(
+					"JSON data contains key not mappable to object: %s",
+					key
+				)
+
+
+class JsonDataEncoder(JSONEncoder):
+
+	def default(self, o):
+		return o.__dict__

@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Programming the IoT - CDA Implementation",
+      "program": "./programmingtheiot/cda/app/ConstrainedDeviceApp.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}
