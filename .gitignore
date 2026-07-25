@@ -1,0 +1,8 @@
+
+gda-java-components/.git-backup/
+
+cda-python-components/.git-backup/
+
+gda-java-components/**/oracleJdk-26/
+
+**/target/
